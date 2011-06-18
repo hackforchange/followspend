@@ -1,0 +1,29 @@
+ruleset a1426x10 {
+	meta {
+		name "FollowSpend"
+		description <<
+		    See what political contributions are being made by the companies and people you follow. 
+		>>
+		author "Jed Wood"
+		logging off
+	}
+
+	dispatch {		
+        domain "twitter.com"
+	}
+
+	global {
+
+	}
+
+	rule twitters {
+		select when pageview ".*" setting ()
+		pre {
+		
+		}
+        emit <<           
+            console.log("yermom");
+        >>;
+		notify("Hello World", "This is a sample rule.");
+	}
+}
