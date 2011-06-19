@@ -21,8 +21,23 @@ ruleset a1426x10 {
 		pre {
 		
 		}
-        emit <<           
-            console.log("yermom");
+        emit <<   
+            fetchSpending = function(entity) {
+                 alert(entity);
+            };
+            
+            $K('.tweet-screen-name').each(function(index) {
+                $K(this).append(" <a class='govspend' style='font-weight:bold; background-color:#3DB155; color:#FFF; padding:1px 5px;' href='#'>$</a>");          
+            });
+             
+            $K('.govspend').hover(                     
+                function () {
+                  fetchSpending("yermom");
+                }, 
+                function () {
+                  
+                }
+            );
         >>;
 		notify("Hello World", "This is a sample rule.");
 	}
