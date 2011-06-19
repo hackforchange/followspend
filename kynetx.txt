@@ -10,14 +10,128 @@ ruleset a1426x10 {
 
 	dispatch {		
         domain "twitter.com"
+        domain "facebook.com"
 	}
 
 	global {
 
 	}
+    
+    rule searchspend is active {
+      select when pageview ".*"
+      
+      pre {
+          title = <<
+             <span id="followspendtitle">Searching...</span>
+          >>;   
+          content = <<
+             <div id="followspendcontent">
+             <img src="http://kynetx-apps.s3.amazonaws.com/advanced-hello-world/working.gif"/>
+             </div>
+          >>;
+          searchterm = event:param("searchterm");
+      }
+      
+      {   
+          notify(title, content) with sticky = true;
+          
+          emit <<    
+          function addCommas(nStr)
+          {
+              nStr += '';
+          	x = nStr.split('.');
+          	x1 = x[0];
+          	x2 = x.length > 1 ? '.' + x[1] : '';
+          	var rgx = /(\d+)(\d{3})/;
+          	while (rgx.test(x1)) {
+          		x1 = x1.replace(rgx, '$1' + ',' + '$2');
+          	}
+          	return x1 + x2;
+          }
+          
+          if (typeof(followspendloaded) === 'undefined')
+          {
+             //alert("NOT LOADED");
+             followspendloaded = true;             
+          }
+             
+             if(window.getSelection){
+               t = window.getSelection();
+             }else if(document.getSelection){
+               t = document.getSelection();
+             }else if(document.selection){
+               t = document.selection.createRange().text;
+             }
+              
+              if (t == '')
+              {
+                alert("Hmmm... looks like you need to select some text somehwhere on the page. Then try again.");                
+                $K(".kGrowl-notification .close").trigger("click");
+              }
+              else
+              {
+               //app = KOBJ.get_application("a1426x10");
+               //app.raise_event("search", {"searchterm":t});           
+               $K.get("http://query.yahooapis.com/v1/public/yql?q=use%20'http%3A%2F%2Flimechile.com%2Fhacks%2Ffollowspend.entitysearch.xml'%20as%20followspend%3B%20select%20*%20from%20followspend%20where%20key%20%3D%20%22e4d34e8391c44b7682915ababb408c65%22%20and%20q%3D%22" + t +  "%22&format=json", function(data) {
+                 var org = data.query.results.result;
+                 if (org.report_type == "details")
+                 {
+                     
+                 }
+                 else
+                 {
+                 
+                 }                                  
+                 $K("#followspendtitle").html(org.raw_name);
+                 $K("#followspendcontent").html("<br /><ul><li style='color:#CDFFF8;'>D: $" + addCommas(org.campaign_finance.recipient_breakdown.dem) + "</li><li style='color:#FFBAB4;'>R: $" + addCommas(org.campaign_finance.recipient_breakdown.rep) + "</li><li style='color:#CBFFD0;'>O: $" + addCommas(org.campaign_finance.recipient_breakdown.other) + "</li></ul><p style='color:#FDDB47;'>Lobbying: $" + addCommas(org.lobbying.expenditures) + "</p><img style='position:absolute;right:16px;top:16px;z-index:-1;' src=https://chart.googleapis.com/chart?chf=bg,s,333333&cht=p&chs=80x80&chd=t:" + Math.round(org.campaign_finance.contribution_total/org.campaign_finance.recipient_breakdown.dem) + "," + Math.round(org.campaign_finance.contribution_total/org.campaign_finance.recipient_breakdown.rep) + "," + Math.round(org.campaign_finance.contribution_total/org.campaign_finance.recipient_breakdown.other) + ">").css('font-weight','bold');                 
+                 $K("#followspendcontent ul li").css('padding-bottom', '4px');
+               });
+              }             
+          >>;
+         
+      }
+      
+    }
+    
+    rule dospendingsearch {
+      select when web search
+      pre {         
+       searchterm = event:param("searchterm");      
+       query_url = "http://query.yahooapis.com/v1/public/yql?q=use%20'http%3A%2F%2Flimechile.com%2Fhacks%2Ffollowspend.entitysearch.xml'%20as%20followspend%3B%20select%20*%20from%20followspend%20where%20key%20%3D%20%22e4d34e8391c44b7682915ababb408c65%22%20and%20q%3D%22" + searchterm +  "%22&format=json"
+      }
+      
+      {          
+         http:get(query_url) with
+         autoraise = "onsearchresults";     
+      }
+      
+    }
+    
+    
+    rule on_search_results {
+        select when http get label "onsearchresults"
+        pre {
+                
+                  
+         }
+             
+         if (true) then { 
+          emit <<
+            alert("got it!");
+            
+             $K("#followspendtitle").html('');
+             $K("#followspendcontent").html(msg);
+          >>;
+         }
+     
+     notfired {
+          raise explicit event no_matches            
+     }
+     
+    }
 
 	rule twitters {
-		select when pageview ".*" setting ()
+		select when pageview "twitter" setting ()
 		pre {
 		
 		}
@@ -38,7 +152,31 @@ ruleset a1426x10 {
                   
                 }
             );
-        >>;
-		notify("Hello World", "This is a sample rule.");
+        >>;		
 	}
+    
+    rule fb {
+    	select when pageview "facebook" setting ()
+    	pre {
+    	
+    	}
+        emit <<   
+            fetchSpending = function(entity) {
+                 alert(entity);
+            };
+            
+            $K('.tweet-screen-name').each(function(index) {
+                $K(this).append(" <a class='govspend' style='font-weight:bold; background-color:#3DB155; color:#FFF; padding:1px 5px;' href='#'>$</a>");          
+            });
+             
+            $K('.govspend').hover(                     
+                function () {
+                  fetchSpending("yermom");
+                }, 
+                function () {
+                  
+                }
+            );
+        >>;
+    }
 }
